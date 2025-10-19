@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.sql import func
-from db import Base
+from app.api.core.db import Base
 
 class User(Base):
     __tablename__ = "users"  # This will be the table name in PostgreSQL
