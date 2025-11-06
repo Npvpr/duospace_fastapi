@@ -1,9 +1,9 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.api.core.db import get_db
+from app.core.db import get_db
 from sqlalchemy import text
-import models
+import app.models.user as models
 import schemas
 
 router = APIRouter()

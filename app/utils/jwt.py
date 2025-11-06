@@ -1,7 +1,7 @@
 from jose import jwt
 import requests
 from fastapi import HTTPException
-from app.api.core.config import settings
+from app.core.config import settings
 
 AWS_COGNITO_REGION = settings.AWS_COGNITO_REGION
 AWS_COGNITO_USER_POOL_ID = settings.AWS_COGNITO_USER_POOL_ID

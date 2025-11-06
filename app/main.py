@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.api.main import api_router
-from app.api.core.config import settings
+from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
 # config = Config('.env')
