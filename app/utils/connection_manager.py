@@ -1,30 +1,30 @@
+from typing import Dict, List
 from fastapi import WebSocket
-from typing import List
-import json
+
 
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: Dict[str, WebSocket] = {}
+        self.rooms: Dict[str, List[str]] = {
+            "room1": ["user1", "user2"],
+            "room2": ["user2", "user3"],
+        }
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, user_id: str, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        self.active_connections[user_id] = websocket
 
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
+    def disconnect(self, user_id: str):
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+        else:
+            raise ValueError("User not connected")
 
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
-    async def broadcast(self, message: str):
-        disconnected_connections = []
-        for connection in self.active_connections:
-            try:
-                await connection.send_text(message)
-            except Exception:
-                disconnected_connections.append(connection)
-        
-        # Remove disconnected connections
-        for connection in disconnected_connections:
-            self.disconnect(connection)
+    async def send_message_to_room(self, room_id: str, sender_id: str, message: str):
+        if room_id in self.rooms:
+            for user_id in self.rooms[room_id]:
+                if user_id in self.active_connections:
+                    websocket = self.active_connections[user_id]
+                    await websocket.send_text(message)
+        else:
+            raise ValueError("Room does not exist")

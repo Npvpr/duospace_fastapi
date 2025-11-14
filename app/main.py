@@ -1,64 +1,23 @@
-from fastapi import FastAPI
+from typing import Annotated
+from fastapi import (
+    Cookie,
+    Depends,
+    FastAPI,
+    Query,
+    WebSocket,
+    WebSocketException,
+    status,
+)
 from app.api.main import api_router
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
-
-# config = Config('.env')
-# app = FastAPI()
-# app.add_middleware(SessionMiddleware, secret_key= "a_very_secret_key")
-# oauth = OAuth()
-
-# COGNITO_DOMAIN = "https://eu-west-2tolrstzjw.auth.eu-west-2.amazoncognito.com"
-# CLIENT_ID = "1j1mb15lir51lhahjvkijt2cgv"
-# oauth.register(
-#   name='oidc',
-#   authority="https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_TolrStzjw",
-#   client_id=CLIENT_ID,
-#   client_secret=config("CLIENT_SECRET"),
-#   server_metadata_url='https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_TolrStzjw/.well-known/openid-configuration',
-#   client_kwargs={'scope': 'email openid phone'}
-# )
-
-# # @app.get("/")
-# # async def root():
-# #   return { "message": "Hello World!"}
-
-# @app.get("/login")
-# async def login(request: Request):
-#   redirect_uri = request.url_for('auth')
-#   return await oauth.oidc.authorize_redirect(request, redirect_uri)
-
-# @app.get("/auth")
-# async def auth(request: Request):
-#   token = await oauth.oidc.authorize_access_token(request)
-#   user = token['userinfo']
-#   return dict(user)
-
-# @app.get("/logout")
-# async def logout(request: Request):
-#   # clear fastapi local session
-#   request.session.clear()
-#   # cognito_logout_url = (
-#   #       f"https://eu-west-2tolrstzjw.auth.eu-west-2.amazoncognito.com/"
-#   #       f"logout?client_id={CLIENT_ID}&logout_uri={request.url_for('root')}"
-#   #   )
-#   logout_url = f"{COGNITO_DOMAIN}/logout?client_id={CLIENT_ID}&logout_uri={request.url_for('root')}"
-#   return RedirectResponse(url=logout_url)
-
-# # main.py
-# from fastapi import FastAPI, Depends, HTTPException
-# from sqlalchemy.orm import Session
-# from typing import List
-
-# # Create all tables in the database
-# # This will create the 'users' and 'messages' tables if they don't exist
-# models.Base.metadata.create_all(bind=engine)
+from fastapi.responses import HTMLResponse
 
 # Create FastAPI app instance
 app = FastAPI(
     title="Duospace Chat API",
     description="Backend API for Duospace chatting application",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Set all CORS enabled origins
@@ -70,5 +29,77 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+html1 = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat</title>
+</head>
+<body>
+    <h1>WebSocket Chat</h1>
+    <form onsubmit="sendMessage(event)">
+        <label>User ID: <input type="text" id="userId" autocomplete="off" value="user1"/></label>
+        <button onclick="connect(event)">Connect</button>
+        <hr>
+        <label>Room ID: <input type="text" id="roomId" autocomplete="off" value="room1"/></label>
+        <label>Message: <input type="text" id="messageText" autocomplete="off"/></label>
+        <button>Send</button>
+    </form>
+    <ul id='messages'></ul>
+
+    <script>
+    var ws = null;
+
+    function connect(event) {
+        var userId = document.getElementById("userId").value;
+        ws = new WebSocket("ws://localhost:8000/ws/" + userId);
+
+        ws.onmessage = function(event) {
+            var messages = document.getElementById('messages');
+            var message = document.createElement('li');
+            message.textContent = event.data;
+            messages.appendChild(message);
+        };
+
+        ws.onopen = function() {
+            console.log("Connected as " + userId);
+        };
+
+        ws.onclose = function() {
+            console.log("Disconnected");
+        };
+
+        event.preventDefault();
+    }
+
+    function sendMessage(event) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            alert("WebSocket not connected!");
+            return;
+        }
+
+        var roomId = document.getElementById("roomId").value;
+        var messageText = document.getElementById("messageText").value;
+
+        ws.send(JSON.stringify({
+            "room_id": roomId,
+            "message": messageText
+        }));
+
+        document.getElementById("messageText").value = '';
+        event.preventDefault();
+    }
+    </script>
+</body>
+</html>
+
+"""
+
+
+@app.get("/1")
+async def get():
+    return HTMLResponse(html1)
+
 
 app.include_router(api_router)
