@@ -14,4 +14,6 @@ class Settings(BaseSettings):
     AWS_COGNITO_APP_CLIENT_ID: str
     AWS_COGNITO_APP_CLIENT_SECRET: str
 
+    JWT_SECRET_KEY: str
+
 settings = Settings()
